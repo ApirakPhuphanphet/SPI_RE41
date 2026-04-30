@@ -51,8 +51,7 @@
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi1;
 
-uint8_t tx_data[2] = {0xA6, 0x00};
-uint8_t rx_data[2] = {0};
+uint8_t data;
 char uart_buf[50];
 
 /* USER CODE END PV */
@@ -111,112 +110,56 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    HAL_Delay(3000);
+    HAL_Delay(500);
     // read
-    tx_data[0] = 0xA6; // read 0x13
-    tx_data[1] = 0x00;
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    sprintf(uart_buf, "0) Register 0x13 Value: 0x%02X\r\n", rx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
+    if (Read_Register(0x13, &data) == HAL_OK)
+    {
+      sprintf(uart_buf, "Read data: 0x%02X\r\n", data);
+      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
+    }
 
-    // reset
-    HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_SET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_RESET);
-    sprintf(uart_buf, "0.1) Reset register!\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    // delay for reset complete
-    HAL_Delay(3);
-
-    tx_data[0] = 0xA6; // read 0x13
-    tx_data[1] = 0x00;
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    sprintf(uart_buf, "1) Register 0x13 Value: 0x%02X\r\n", rx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
     // write
-    tx_data[0] = 0x26; // write 0x13
-    tx_data[1] = 0x36;
-    sprintf(uart_buf, "2) Write Register 0x13 Value: 0x%02X\r\n", tx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    HAL_Delay(1000);
+    if (Write_Register(0x13, 0x26) == HAL_OK)
+    {
+      sprintf(uart_buf, "Write data: 0x%02X\r\n", 0x26);
+      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
+    }
 
     // read after write
-    tx_data[0] = 0xA6; // read 0x13
-    tx_data[1] = 0x00;
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    sprintf(uart_buf, "3) Register 0x13 after write Value: 0x%02X\r\n", rx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
+    if (Read_Register(0x13, &data) == HAL_OK)
+    {
+      sprintf(uart_buf, "Read after write: 0x%02X\r\n", data);
+      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
+    }
 
     // write over flow
-    tx_data[0] = 0x26; // write 0x13
-    tx_data[1] = 0x41; // over flow
-    sprintf(uart_buf, "4) Write Register 0x13 Value: 0x%02X overflow\r\n", tx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    HAL_Delay(1000);
+    if (Write_Register(0x13, 0x41) == HAL_OK)
+    {
+      sprintf(uart_buf, "Write data overflow: 0x%02X\r\n", 0x41);
+      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
+    }
 
     // read after write
-    tx_data[0] = 0xA6; // read 0x13
-    tx_data[1] = 0x00;
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    sprintf(uart_buf, "5) Register 0x13 after write overflow Value: 0x%02X\r\n", rx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
+    if (Read_Register(0x13, &data) == HAL_OK)
+    {
+      sprintf(uart_buf, "Read after write overflow: 0x%02X\r\n", data);
+      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
+    }
 
     // reset
-    HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_SET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_RESET);
-    sprintf(uart_buf, "6) Reset register!\r\n");
+    Reset_RE41();
+    sprintf(uart_buf, "Reset RE41\r\n");
     HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
 
     // read after reset
-    tx_data[0] = 0xA6; // read 0x13
-    tx_data[1] = 0x00;
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    sprintf(uart_buf, "7) Register 0x13 after Reset Value: 0x%02X\r\n", rx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
+    if (Read_Register(0x13, &data) == HAL_OK)
+    {
+      sprintf(uart_buf, "Read after reset: 0x%02X\r\n", data);
+      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
+    }
 
-    // reset again
-    HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_SET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_RESET);
-    sprintf(uart_buf, "8) Reset register again!\r\n");
+    sprintf(uart_buf, "-----------------------------\r\n");
     HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
-
-    // read after reset
-    tx_data[0] = 0xA6; // read 0x13
-    tx_data[1] = 0x00;
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, 2, 100);
-    HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
-    sprintf(uart_buf, "9) Register 0x13 after Reset again Value: 0x%02X\r\n", rx_data[1]);
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    HAL_Delay(1000);
-    sprintf(uart_buf, "Program Terminated\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    //	  HAL_Delay(2500);
     while (1)
       ;
     /* USER CODE BEGIN 3 */
