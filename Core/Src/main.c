@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 // Take SPI From spi file.
 /* USER CODE END Includes */
 
@@ -51,7 +52,7 @@
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi1;
 extern char uart_buf[50];
-
+extern bool packet_complete;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,8 +109,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(3500);
-    HAL_UART_Transmit(&huart2, uart_buf, strlen(uart_buf), 100);
+    HAL_Delay(1000);
+    if (packet_complete)
+    {
+      HAL_UART_Transmit(&huart2, uart_buf, strlen(uart_buf), 100);
+    }
+    else
+    {
+      HAL_UART_Transmit(&huart2, (uint8_t *)"Waiting for packet...\r\n", 22, 100);
+    }
+
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }

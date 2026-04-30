@@ -19,10 +19,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
+#include <stdbool.h>
 
 /* USER CODE BEGIN 0 */
 uint8_t uart_buf[50];
 uint8_t uart_index = 0;
+uint8_t payload_length = 0;
+bool packet_complete = false;
 
 #define PACKET_HEADER 0xAA
 /* USER CODE END 0 */
@@ -226,6 +229,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART2)
   {
     uart_index = (uart_index + 1) % sizeof(uart_buf);
+    if (uart_index >= 2)
+    {
+      payload_length = uart_buf[1];
+    }
+    if (uart_index == payload_length + 1)
+    {
+      packet_complete = true;
+    }
     HAL_UART_Receive_IT(&huart2, &uart_buf[uart_index], 1);
   }
 }
