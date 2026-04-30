@@ -214,7 +214,7 @@ int main(void)
     sprintf(uart_buf, "9) Register 0x13 after Reset again Value: 0x%02X\r\n", rx_data[1]);
     HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
     HAL_Delay(1000);
-    sprintf(uart_buf, "-----------------------------------------------\r\n");
+    sprintf(uart_buf, "Program Terminated\r\n");
     HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
     //	  HAL_Delay(2500);
     while (1)
