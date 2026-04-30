@@ -50,9 +50,7 @@
 
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi1;
-
-uint8_t data;
-char uart_buf[50];
+extern char uart_buf[50];
 
 /* USER CODE END PV */
 
@@ -103,65 +101,16 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Receive_IT(&huart2, uart_buf, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    HAL_Delay(3500);
+    HAL_UART_Transmit(&huart2, uart_buf, strlen(uart_buf), 100);
     /* USER CODE END WHILE */
-    HAL_Delay(500);
-    // read
-    if (Read_Register(0x13, &data) == HAL_OK)
-    {
-      sprintf(uart_buf, "Read data: 0x%02X\r\n", data);
-      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    }
-
-    // write
-    if (Write_Register(0x13, 0x26) == HAL_OK)
-    {
-      sprintf(uart_buf, "Write data: 0x%02X\r\n", 0x26);
-      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    }
-
-    // read after write
-    if (Read_Register(0x13, &data) == HAL_OK)
-    {
-      sprintf(uart_buf, "Read after write: 0x%02X\r\n", data);
-      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    }
-
-    // write over flow
-    if (Write_Register(0x13, 0x41) == HAL_OK)
-    {
-      sprintf(uart_buf, "Write data overflow: 0x%02X\r\n", 0x41);
-      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    }
-
-    // read after write
-    if (Read_Register(0x13, &data) == HAL_OK)
-    {
-      sprintf(uart_buf, "Read after write overflow: 0x%02X\r\n", data);
-      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    }
-
-    // reset
-    Reset_RE41();
-    sprintf(uart_buf, "Reset RE41\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-
-    // read after reset
-    if (Read_Register(0x13, &data) == HAL_OK)
-    {
-      sprintf(uart_buf, "Read after reset: 0x%02X\r\n", data);
-      HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    }
-
-    sprintf(uart_buf, "-----------------------------\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, strlen(uart_buf), 100);
-    while (1)
-      ;
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
