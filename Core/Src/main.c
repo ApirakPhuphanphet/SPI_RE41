@@ -51,8 +51,12 @@
 
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi1;
-extern char uart_buf[50];
-extern bool packet_complete;
+extern uint8_t uart_buf[50];
+extern volatile uint8_t uart_index;
+extern volatile uint8_t payload_length;
+extern volatile bool packet_complete;
+
+uint8_t response_buf[50];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,29 +106,56 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, uart_buf, 1);
+  HAL_UARTEx_ReceiveToIdle_IT(&huart2, uart_buf, 50);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(1000);
     if (packet_complete)
     {
-      HAL_UART_Transmit(&huart2, uart_buf, strlen(uart_buf), 100);
-    }
-    else
-    {
-      HAL_UART_Transmit(&huart2, (uint8_t *)"Waiting for packet...\r\n", 22, 100);
-    }
+      Data_StatusTypeDef status = Data_Verify(uart_buf, uart_index);
 
+      if (status == CHECKSUM_OK)
+      {
+        uint8_t cmd = uart_buf[2];
+        uint8_t address = uart_buf[3];
+        if (cmd == 0x01)
+        {
+          // SPI read
+          uint8_t spi_data;
+          Read_Register(address, &spi_data);
+          sprintf(response_buf, "SPI Read: 0x%02X", spi_data);
+          HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+        }
+        else if (cmd == 0x00)
+        {
+          // SPI write
+          uint8_t spi_data = uart_buf[4];
+          Write_Register(address, spi_data);
+          sprintf(response_buf, "SPI Write: 0x%02X", spi_data);
+          HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+        }
+        else
+        {
+          sprintf(response_buf, "Unknown Command: 0x%02X", cmd);
+          HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+        }
+      }
+      else
+      {
+        sprintf(response_buf, "Error: 0x%02X", status);
+        HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+      }
+      Clear_Buffer();
+    }
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
-}
 
+    /* USER CODE END 3 */
+  }
+}
 /**
  * @brief System Clock Configuration
  * @retval None

@@ -22,10 +22,12 @@
 #include <stdbool.h>
 
 /* USER CODE BEGIN 0 */
+#include <string.h>
+
 uint8_t uart_buf[50];
-uint8_t uart_index = 0;
-uint8_t payload_length = 0;
-bool packet_complete = false;
+volatile uint8_t uart_index = 0;
+volatile uint8_t payload_length = 0;
+volatile bool packet_complete = false;
 
 #define PACKET_HEADER 0xAA
 /* USER CODE END 0 */
@@ -223,22 +225,73 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-// Intrrupt callbacks function
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   if (huart->Instance == USART2)
   {
-    uart_index = (uart_index + 1) % sizeof(uart_buf);
-    if (uart_index >= 2)
-    {
-      payload_length = uart_buf[1];
-    }
-    if (uart_index == payload_length + 1)
-    {
-      packet_complete = true;
-    }
-    HAL_UART_Receive_IT(&huart2, &uart_buf[uart_index], 1);
+    uart_index = Size;
+    packet_complete = true;
   }
 }
+
+void Clear_Buffer(void)
+{
+  memset((void *)uart_buf, 0x00, sizeof(uart_buf));
+  uart_index = 0;
+  packet_complete = false;
+
+  HAL_UARTEx_ReceiveToIdle_IT(&huart2, uart_buf, sizeof(uart_buf));
+}
+
+Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length)
+{
+  // check null
+  if (data == NULL)
+  {
+    return NULL_PTR_ERROR;
+  }
+
+  // check minimum length (header + length + command + checksum)
+  if (total_length < 4)
+  {
+    return LENGTH_ERROR;
+  }
+
+  // check header
+  if (data[0] != PACKET_HEADER)
+  {
+    return HEADER_ERROR;
+  }
+
+  // check length
+  uint8_t expected_payload_len = data[1];
+  if (total_length != (2 + expected_payload_len))
+  {
+    return LENGTH_ERROR;
+  }
+
+  // check command
+  uint8_t command = data[2];
+  if (command != 0x00 && command != 0x01)
+  {
+    return CMD_ERROR;
+  }
+
+  // check checksum (BCC)
+  uint8_t bcc_check = 0;
+  for (uint16_t i = 0; i < total_length; i++)
+  {
+    bcc_check ^= data[i];
+  }
+
+  if (bcc_check != 0)
+  {
+    return CHECKSUM_ERROR;
+  }
+
+  return CHECKSUM_OK;
+}
+
 
 /* USER CODE END 1 */
