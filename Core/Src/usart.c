@@ -293,5 +293,19 @@ Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length)
   return CHECKSUM_OK;
 }
 
-
+void Response(uint8_t *response_buffer, uint8_t data)
+{
+  response_buffer[0] = PACKET_HEADER;
+  response_buffer[1] = 2;
+  response_buffer[2] = data;
+  // Calculate checksum
+  uint8_t checksum = 0;
+  for (int i = 0; i <= 2; i++)
+  {
+    checksum ^= response_buffer[i];
+  }
+  response_buffer[3] = checksum;
+  HAL_UART_Transmit(&huart2, response_buffer, 4, 100);
+  memset(response_buffer, 0x00, 50);
+}
 /* USER CODE END 1 */

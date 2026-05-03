@@ -126,27 +126,24 @@ int main(void)
           // SPI read
           uint8_t spi_data;
           Read_Register(address, &spi_data);
-          sprintf(response_buf, "SPI Read: 0x%02X", spi_data);
-          HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+          Response(response_buf, spi_data);
         }
         else if (cmd == 0x00)
         {
           // SPI write
           uint8_t spi_data = uart_buf[4];
           Write_Register(address, spi_data);
-          sprintf(response_buf, "SPI Write: 0x%02X", spi_data);
-          HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+          Read_Register(address, &spi_data);
+          Response(response_buf, spi_data);
         }
         else
         {
-          sprintf(response_buf, "Unknown Command: 0x%02X", cmd);
-          HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+          Response(response_buf, 0xFF); // Send error response
         }
       }
       else
       {
-        sprintf(response_buf, "Error: 0x%02X", status);
-        HAL_UART_Transmit(&huart2, (uint8_t *)response_buf, strlen(response_buf), 100);
+        Response(response_buf, 0xFF); // Send error response
       }
       Clear_Buffer();
     }
