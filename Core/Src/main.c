@@ -136,14 +136,10 @@ int main(void)
           Read_Register(address, &spi_data);
           Response(response_buf, spi_data);
         }
-        else
-        {
-          Response(response_buf, 0xFF); // Send error response
-        }
       }
       else
       {
-        Response(response_buf, 0xFF); // Send error response
+        Response(response_buf, status);
       }
       Clear_Buffer();
     }
