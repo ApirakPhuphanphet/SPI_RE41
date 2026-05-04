@@ -107,12 +107,21 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_UARTEx_ReceiveToIdle_IT(&huart2, uart_buf, 50);
+  // Enable debug in sleep mode for testing with ST-Link
+  HAL_DBGMCU_EnableDBGSleepMode();
+  // Delay to allow debugger to connect before entering main loop
+  HAL_Delay(2000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // Enter sleep mode, will wake up on UART receive interrupt
+    HAL_SuspendTick();
+    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+    HAL_ResumeTick();
+
     if (packet_complete)
     {
       Data_StatusTypeDef status = Data_Verify(uart_buf, uart_index);
