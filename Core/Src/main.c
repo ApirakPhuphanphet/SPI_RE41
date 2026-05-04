@@ -133,7 +133,7 @@ int main(void)
         uint8_t address = uart_buf[3];
         switch (cmd)
         {
-        case 0x00: // SPI write
+        case SPI_WRITE:
         {
           spi_data = uart_buf[4];
           Write_Register(address, spi_data);
@@ -141,13 +141,13 @@ int main(void)
           Response(response_buf, spi_data);
           break;
         }
-        case 0x01: // SPI read
+        case SPI_READ:
         {
           Read_Register(address, &spi_data);
           Response(response_buf, spi_data);
           break;
         }
-        case 0x02: // Reset command
+        case SPI_RESET:
           Reset_RE41();
           Response(response_buf, 0x00); // Acknowledge reset
           break;
