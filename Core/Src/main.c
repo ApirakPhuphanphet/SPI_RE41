@@ -141,7 +141,7 @@ int main(void)
       {
         Response(response_buf, status);
       }
-      Clear_Buffer();
+      Prepare_Next_Packet();
     }
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */

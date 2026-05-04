@@ -235,7 +235,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
   }
 }
 
-void Clear_Buffer(void)
+void Prepare_Next_Packet(void)
 {
   memset((void *)uart_buf, 0x00, sizeof(uart_buf));
   uart_index = 0;

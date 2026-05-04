@@ -54,7 +54,7 @@ extern "C"
     NULL_PTR_ERROR = 0xFA
   } Data_StatusTypeDef;
 
-  void Clear_Buffer(void);
+  void Prepare_Next_Packet(void);
   void Response(uint8_t *response_buffer, uint8_t data);
   /* USER CODE END Prototypes */
 
