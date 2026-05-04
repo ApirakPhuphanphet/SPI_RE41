@@ -57,6 +57,7 @@ extern volatile uint8_t payload_length;
 extern volatile bool packet_complete;
 
 uint8_t response_buf[50];
+uint8_t spi_data;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -130,20 +131,29 @@ int main(void)
       {
         uint8_t cmd = uart_buf[2];
         uint8_t address = uart_buf[3];
-        if (cmd == 0x01)
+        switch (cmd)
         {
-          // SPI read
-          uint8_t spi_data;
-          Read_Register(address, &spi_data);
-          Response(response_buf, spi_data);
-        }
-        else if (cmd == 0x00)
+        case 0x00: // SPI write
         {
-          // SPI write
-          uint8_t spi_data = uart_buf[4];
+          spi_data = uart_buf[4];
           Write_Register(address, spi_data);
           Read_Register(address, &spi_data);
           Response(response_buf, spi_data);
+          break;
+        }
+        case 0x01: // SPI read
+        {
+          Read_Register(address, &spi_data);
+          Response(response_buf, spi_data);
+          break;
+        }
+        case 0x02: // Reset command
+          Reset_RE41();
+          Response(response_buf, 0x00); // Acknowledge reset
+          break;
+        default:
+          Response(response_buf, CMD_ERROR);
+          break;
         }
       }
       else

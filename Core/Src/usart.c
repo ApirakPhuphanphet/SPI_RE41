@@ -273,7 +273,8 @@ Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length)
 
   // check command
   uint8_t command = data[2];
-  if (command != 0x00 && command != 0x01)
+  // Only allow commands 0x00 (write), 0x01 (read), and 0x02 (reset)
+  if (command != 0x00 && command != 0x01 && command != 0x02)
   {
     return CMD_ERROR;
   }
