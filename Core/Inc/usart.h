@@ -56,6 +56,7 @@ extern "C"
 
   void Clear_Buffer(void);
   void Response(uint8_t *response_buffer, uint8_t data);
+  Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length);
   /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
