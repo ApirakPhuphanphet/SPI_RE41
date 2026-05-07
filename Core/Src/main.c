@@ -56,7 +56,6 @@ extern volatile uint8_t uart_index;
 extern volatile uint8_t payload_length;
 extern volatile bool packet_complete;
 
-uint8_t response_buf[50];
 uint8_t spi_data;
 /* USER CODE END PV */
 
@@ -138,36 +137,35 @@ int main(void)
           spi_data = uart_buf[4];
           Write_Register(address, spi_data);
           Read_Register(address, &spi_data);
-          Response(response_buf, spi_data);
+          Response(&spi_data, 1);
           break;
         }
         case SPI_READ_SINGLE:
         {
           Read_Register(address, &spi_data);
-          Response(response_buf, spi_data);
+          Response(&spi_data, 1);
           break;
         }
         case SPI_RESET:
           Reset_RE41();
-          Response(response_buf, 0x00); // Acknowledge reset
+          Response(&spi_data, 1); // Acknowledge reset
           break;
         case SPI_READ_MULTIPLE:
         {
           uint8_t num_bytes = uart_buf[1] - 2; // Total length - CMD and BCC
           uint8_t spi_data_buffer[num_bytes];
           Read_Multiple_Register(&uart_buf[3], &spi_data_buffer, num_bytes);
-          HAL_UART_Transmit(&huart2, spi_data_buffer, num_bytes, 100);
-          // Response(response_buf, spi_data);
+          Response(spi_data_buffer, num_bytes);
           break;
         }
         default:
-          Response(response_buf, CMD_ERROR);
+          Response(&status, 1);
           break;
         }
       }
       else
       {
-        Response(response_buf, status);
+        Response(&status, 1);
       }
       Prepare_Next_Packet();
     }

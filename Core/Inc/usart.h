@@ -55,7 +55,7 @@ extern "C"
   } Data_StatusTypeDef;
 
   void Prepare_Next_Packet(void);
-  void Response(uint8_t *response_buffer, uint8_t data);
+  void Response(uint8_t *data, uint8_t data_len);
   Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length);
   /* USER CODE END Prototypes */
 
