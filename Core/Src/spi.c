@@ -149,6 +149,47 @@ HAL_StatusTypeDef Read_Register(uint8_t reg_addr, uint8_t *data)
   return status;
 }
 
+HAL_StatusTypeDef Read_Multiple_Register(uint8_t *reg_addr, uint8_t *data, uint8_t len)
+{
+  uint8_t tx_data[len + 1];
+  uint8_t rx_data[len + 1];
+
+  for (uint8_t i = 0; i < len; i++)
+  {
+    if (i == 0)
+    {
+      /* byte 0 MSB = 1 */
+      tx_data[i] = (reg_addr[i] << 1) | 0x80;
+    }
+    else
+    {
+      /* other bytes MSB = 0 */
+      tx_data[i] = (reg_addr[i] << 1) & 0x7F;
+    }
+    rx_data[i] = 0x00;
+  }
+
+  HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
+  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, len + 1, 100);
+  HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
+
+  if (status == HAL_OK)
+  {
+    for (uint8_t i = 0; i < len; i++)
+    {
+      data[i] = rx_data[i + 1];
+    }
+  }
+  else
+  {
+    for (uint8_t i = 0; i < len; i++)
+    {
+      data[i] = 0xFF; // Indicate error
+    }
+  }
+  return status;
+}
+
 HAL_StatusTypeDef Write_Register(uint8_t reg_addr, uint8_t data)
 {
   uint8_t tx_data[2];

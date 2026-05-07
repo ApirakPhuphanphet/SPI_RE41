@@ -141,7 +141,7 @@ int main(void)
           Response(response_buf, spi_data);
           break;
         }
-        case SPI_READ:
+        case SPI_READ_SINGLE:
         {
           Read_Register(address, &spi_data);
           Response(response_buf, spi_data);
@@ -151,6 +151,15 @@ int main(void)
           Reset_RE41();
           Response(response_buf, 0x00); // Acknowledge reset
           break;
+        case SPI_READ_MULTIPLE:
+        {
+          uint8_t num_bytes = uart_buf[1] - 2; // Total length - CMD and BCC
+          uint8_t spi_data_buffer[num_bytes];
+          Read_Multiple_Register(&uart_buf[3], &spi_data_buffer, num_bytes);
+          HAL_UART_Transmit(&huart2, spi_data_buffer, num_bytes, 100);
+          // Response(response_buf, spi_data);
+          break;
+        }
         default:
           Response(response_buf, CMD_ERROR);
           break;
