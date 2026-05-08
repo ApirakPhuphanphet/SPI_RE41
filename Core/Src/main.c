@@ -26,9 +26,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+// standard library
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+// RE41 Lib
+#include "hfreader.h"
+#include "re41.h"
+#include "re41_ex.h"
+
+#include "re41_interface.h"
 // Take SPI From spi file.
 /* USER CODE END Includes */
 
@@ -39,7 +47,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RE41_IRQ_CFG 1   // 0: disable, 1: enable
+#define RE41_RSTPD_CFG 0 // 0: disable, 1: enable
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,7 +65,9 @@ extern volatile uint8_t uart_size;
 extern volatile uint8_t payload_length;
 extern volatile bool packet_complete;
 
-uint8_t spi_data;
+uint8_t response_data;
+HFREADER_DrvTypeDef *hfReaderDrv;
+re41_configProtocol_t g_tagType;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -78,7 +89,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  hfalStatus_t status = HFAL_ERROR;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -106,6 +117,42 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  // RE41 initial standard
+  RE41_init(RE41_IRQ_CFG, RE41_RSTPD_CFG, &hfReaderDrv);
+  // RE41 initial extended
+  RE41Ext_init(RE41_IRQ_CFG, RE41_RSTPD_CFG);
+
+  // RE41 reset before using
+  HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, SET);
+  HAL_Delay(10);
+  HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, RESET);
+  HAL_Delay(10);
+
+  // analyze interface between MCU and RE41 reader
+  status = RE41_analyze();
+  if (status != HFAL_SUCCESS)
+  {
+    HAL_UART_Transmit(&huart2, (uint8_t *)"\r\nRE41-Interface-Error", 22, HAL_MAX_DELAY);
+    while (1)
+      ; // break here
+  }
+
+  // configure RE41 reader
+  status = RE41_configuration(ISO14443A_106KBPS);
+  if (status != HFAL_SUCCESS)
+  {
+    while (1)
+    {
+      HAL_UART_Transmit(&huart2, (uint8_t *)"\r\nRE41-Unknown-Series", 21, HAL_MAX_DELAY);
+    }
+  }
+  g_tagType = ISO14443A_106KBPS;
+
+  RE41_rfOperate(RFOFF);
+  HAL_Delay(25);
+  RE41_rfOperate(RFON);
+  HAL_Delay(25);
+
   HAL_UARTEx_ReceiveToIdle_IT(&huart2, uart_buf, 50);
   // Enable debug in sleep mode for testing with ST-Link
   HAL_DBGMCU_EnableDBGSleepMode();
@@ -133,22 +180,22 @@ int main(void)
         {
         case SPI_WRITE:
         {
-          spi_data = uart_buf[4];
-          Write_Register(uart_buf[ADDRESS_INDEX], spi_data);
-          Read_Register(uart_buf[ADDRESS_INDEX], &spi_data);
-          Response(&spi_data, 1);
+          response_data = uart_buf[4];
+          Write_Register(uart_buf[ADDRESS_INDEX], response_data);
+          Read_Register(uart_buf[ADDRESS_INDEX], &response_data);
+          Response(&response_data, 1);
           break;
         }
         case SPI_READ_SINGLE:
         {
-          Read_Register(uart_buf[ADDRESS_INDEX], &spi_data);
-          Response(&spi_data, 1);
+          Read_Register(uart_buf[ADDRESS_INDEX], &response_data);
+          Response(&response_data, 1);
           break;
         }
         case SPI_RESET:
           Reset_RE41();
-          spi_data = 0x00;        // Indicate success
-          Response(&spi_data, 1); // Acknowledge reset
+          response_data = 0x00;        // Indicate success
+          Response(&response_data, 1); // Acknowledge reset
           break;
         case SPI_READ_MULTIPLE:
         {
@@ -167,12 +214,28 @@ int main(void)
             spi_data_buffer[i] = uart_buf[4 + i];
           }
           Write_Multiple_Register(uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
-          Read_Register(uart_buf[ADDRESS_INDEX], &spi_data);
-          Response(&spi_data, 1);
+          Read_Register(uart_buf[ADDRESS_INDEX], &response_data);
+          Response(&response_data, 1);
           break;
         }
+        case TAG_TYPE_A_WRITE:
+          // data is uart_buf[4] to uart_buf[7]
+          // write_type_A(address, (uint8_t *)uart_buf + 4, 4);
+          // read_type_A(address);
+          break;
+        case TAG_TYPE_A_READ:
+          // read_type_A(address);
+          break;
+        case TAG_TYPE_A_DUMP:
+          // dump_mem();
+          break;
+        case TAG_TYPE_A_RESET:
+          // reset_type_A(address);
+          break;
+        case TAG_TYPE_A_READ_UID:
+          // read_uid_type_A(address);
+          break;
         default:
-          Response(&status, 1);
           break;
         }
       }
