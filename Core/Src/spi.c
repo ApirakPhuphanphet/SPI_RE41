@@ -149,7 +149,7 @@ HAL_StatusTypeDef Read_Register(uint8_t reg_addr, uint8_t *data)
   return status;
 }
 
-HAL_StatusTypeDef Read_Multiple_Register(uint8_t *reg_addr, uint8_t *data, uint8_t len)
+HAL_StatusTypeDef Read_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8_t len)
 {
   uint8_t tx_data[len + 1];
   uint8_t rx_data[len + 1];
@@ -159,12 +159,12 @@ HAL_StatusTypeDef Read_Multiple_Register(uint8_t *reg_addr, uint8_t *data, uint8
     if (i == 0)
     {
       /* byte 0 MSB = 1 */
-      tx_data[i] = (reg_addr[i] << 1) | 0x80;
+      tx_data[i] = (reg_addr << 1) | 0x80;
     }
     else
     {
       /* other bytes MSB = 0 */
-      tx_data[i] = (reg_addr[i] << 1) & 0x7F;
+      tx_data[i] = (reg_addr << 1) & 0x7F;
     }
     rx_data[i] = 0x00;
   }

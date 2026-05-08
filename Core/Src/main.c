@@ -154,7 +154,7 @@ int main(void)
         {
           uint8_t num_bytes = uart_buf[1] - 2; // Total length - CMD and BCC
           uint8_t spi_data_buffer[num_bytes];
-          Read_Multiple_Register(&uart_buf[ADDRESS_INDEX], &spi_data_buffer, num_bytes);
+          Read_Multiple_Register(uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
           Response(spi_data_buffer, num_bytes);
           break;
         }
@@ -167,7 +167,8 @@ int main(void)
             spi_data_buffer[i] = uart_buf[4 + i];
           }
           Write_Multiple_Register(uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
-          Response(spi_data_buffer, num_bytes);
+          Read_Register(uart_buf[ADDRESS_INDEX], &spi_data);
+          Response(&spi_data, 1);
           break;
         }
         default:
