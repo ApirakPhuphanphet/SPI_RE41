@@ -148,13 +148,14 @@ int main(void)
         }
         case SPI_RESET:
           Reset_RE41();
+          spi_data = 0x00;        // Indicate success
           Response(&spi_data, 1); // Acknowledge reset
           break;
         case SPI_READ_MULTIPLE:
         {
           uint8_t num_bytes = uart_buf[1] - 2; // Total length - CMD and BCC
           uint8_t spi_data_buffer[num_bytes];
-          Read_Multiple_Register(uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
+          Read_Multiple_Register(&uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
           Response(spi_data_buffer, num_bytes);
           break;
         }

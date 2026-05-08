@@ -44,7 +44,7 @@ extern "C"
   /* USER CODE BEGIN Prototypes */
   // return array of 2 bytes, first byte is register address, second byte is data
   HAL_StatusTypeDef Read_Register(uint8_t reg_addr, uint8_t *data);
-  HAL_StatusTypeDef Read_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8_t len);
+  HAL_StatusTypeDef Read_Multiple_Register(uint8_t *reg_addr, uint8_t *data, uint8_t len);
   HAL_StatusTypeDef Write_Register(uint8_t reg_addr, uint8_t data);
   void Reset_RE41(void);
   HAL_StatusTypeDef Write_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8_t len);
