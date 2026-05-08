@@ -47,13 +47,14 @@ extern "C"
   HAL_StatusTypeDef Read_Multiple_Register(uint8_t *reg_addr, uint8_t *data, uint8_t len);
   HAL_StatusTypeDef Write_Register(uint8_t reg_addr, uint8_t data);
   void Reset_RE41(void);
-
+  HAL_StatusTypeDef Write_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8_t len);
   typedef enum
   {
     SPI_WRITE = 0x00,
     SPI_READ_SINGLE = 0x01,
     SPI_RESET = 0x02,
-    SPI_READ_MULTIPLE = 0x03
+    SPI_READ_MULTIPLE = 0x03,
+    SPI_WRITE_MULTIPLE = 0x04
   } SPI_CMDTypeDef;
   /* USER CODE END Prototypes */
 

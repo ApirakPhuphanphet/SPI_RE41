@@ -39,7 +39,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CMD_INDEX 2
+#define ADDRESS_INDEX 3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -128,21 +129,20 @@ int main(void)
 
       if (status == CHECKSUM_OK)
       {
-        uint8_t cmd = uart_buf[2];
-        uint8_t address = uart_buf[3];
+        uint8_t cmd = uart_buf[CMD_INDEX];
         switch (cmd)
         {
         case SPI_WRITE:
         {
           spi_data = uart_buf[4];
-          Write_Register(address, spi_data);
-          Read_Register(address, &spi_data);
+          Write_Register(uart_buf[ADDRESS_INDEX], spi_data);
+          Read_Register(uart_buf[ADDRESS_INDEX], &spi_data);
           Response(&spi_data, 1);
           break;
         }
         case SPI_READ_SINGLE:
         {
-          Read_Register(address, &spi_data);
+          Read_Register(uart_buf[ADDRESS_INDEX], &spi_data);
           Response(&spi_data, 1);
           break;
         }
@@ -154,7 +154,19 @@ int main(void)
         {
           uint8_t num_bytes = uart_buf[1] - 2; // Total length - CMD and BCC
           uint8_t spi_data_buffer[num_bytes];
-          Read_Multiple_Register(&uart_buf[3], &spi_data_buffer, num_bytes);
+          Read_Multiple_Register(&uart_buf[ADDRESS_INDEX], &spi_data_buffer, num_bytes);
+          Response(spi_data_buffer, num_bytes);
+          break;
+        }
+        case SPI_WRITE_MULTIPLE:
+        {
+          uint8_t num_bytes = uart_buf[1] - 3; // Total length - CMD, ADDR, and BCC
+          uint8_t spi_data_buffer[num_bytes];
+          for (uint8_t i = 0; i < num_bytes; i++)
+          {
+            spi_data_buffer[i] = uart_buf[4 + i];
+          }
+          Write_Multiple_Register(uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
           Response(spi_data_buffer, num_bytes);
           break;
         }
