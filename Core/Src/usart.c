@@ -297,6 +297,7 @@ Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length)
 void Response(uint8_t *data, uint8_t data_len)
 {
   uint8_t response_buffer[50];
+  memset(response_buffer, 0x00, 50);
   response_buffer[0] = PACKET_HEADER;
   response_buffer[1] = data_len + 1; // Payload length + checksum
   for (uint8_t i = 0; i < data_len; i++)
@@ -305,12 +306,11 @@ void Response(uint8_t *data, uint8_t data_len)
   }
   // Calculate checksum
   uint8_t checksum = 0;
-  for (int i = 0; i <= 2 + data_len; i++)
+  for (int i = 0; i <= strlen((char *)response_buffer); i++)
   {
     checksum ^= response_buffer[i];
   }
-  response_buffer[3 + data_len] = checksum;
-  HAL_UART_Transmit(&huart2, response_buffer, 4 + data_len, 100);
-  memset(response_buffer, 0x00, 50);
+  response_buffer[2 + data_len] = checksum;
+  HAL_UART_Transmit(&huart2, response_buffer, 3 + data_len, 100);
 }
 /* USER CODE END 1 */
