@@ -25,7 +25,7 @@
 #include <string.h>
 
 uint8_t uart_buf[50];
-volatile uint8_t uart_index = 0;
+volatile uint8_t uart_size = 0;
 volatile uint8_t payload_length = 0;
 volatile bool packet_complete = false;
 
@@ -230,7 +230,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   if (huart->Instance == USART2)
   {
-    uart_index = Size;
+    uart_size = Size;
     packet_complete = true;
   }
 }
@@ -238,7 +238,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 void Prepare_Next_Packet(void)
 {
   memset((void *)uart_buf, 0x00, sizeof(uart_buf));
-  uart_index = 0;
+  uart_size = 0;
   packet_complete = false;
 
   HAL_UARTEx_ReceiveToIdle_IT(&huart2, uart_buf, sizeof(uart_buf));
@@ -259,22 +259,25 @@ Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length)
   }
 
   // check header
-  if (data[0] != PACKET_HEADER)
+  if (data[HEADER_INDEX] != PACKET_HEADER)
   {
     return HEADER_ERROR;
   }
 
   // check length
-  uint8_t expected_payload_len = data[1];
+  uint8_t expected_payload_len = data[LENGTH_INDEX];
   if (total_length != (2 + expected_payload_len))
   {
     return LENGTH_ERROR;
   }
 
-  // check command
-  uint8_t command = data[2];
-  // Only allow commands 0x00 (write), 0x01 (read), 0x02 (reset), 0x03 (read multiple), and 0x04 (write multiple)
-  if (command != 0x00 && command != 0x01 && command != 0x02 && command != 0x03 && command != 0x04)
+  CMD_TypeDef command = (CMD_TypeDef)data[CMD_INDEX];
+
+  if (command != SPI_WRITE &&
+      command != SPI_READ_SINGLE &&
+      command != SPI_RESET &&
+      command != SPI_READ_MULTIPLE &&
+      command != SPI_WRITE_MULTIPLE)
   {
     return CMD_ERROR;
   }
@@ -298,8 +301,8 @@ void Response(uint8_t *data, uint8_t data_len)
 {
   uint8_t response_buffer[50];
   memset(response_buffer, 0x00, 50);
-  response_buffer[0] = PACKET_HEADER;
-  response_buffer[1] = data_len + 1; // Payload length + checksum
+  response_buffer[HEADER_INDEX] = PACKET_HEADER;
+  response_buffer[LENGTH_INDEX] = data_len + 1; // Payload length + checksum
   for (uint8_t i = 0; i < data_len; i++)
   {
     response_buffer[2 + i] = data[i];

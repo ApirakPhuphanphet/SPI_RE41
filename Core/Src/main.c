@@ -39,8 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CMD_INDEX 2
-#define ADDRESS_INDEX 3
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,7 +52,7 @@
 /* USER CODE BEGIN PV */
 extern SPI_HandleTypeDef hspi1;
 extern uint8_t uart_buf[50];
-extern volatile uint8_t uart_index;
+extern volatile uint8_t uart_size;
 extern volatile uint8_t payload_length;
 extern volatile bool packet_complete;
 
@@ -125,7 +124,7 @@ int main(void)
 
     if (packet_complete)
     {
-      Data_StatusTypeDef status = Data_Verify(uart_buf, uart_index);
+      Data_StatusTypeDef status = Data_Verify(uart_buf, uart_size);
 
       if (status == CHECKSUM_OK)
       {

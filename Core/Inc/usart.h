@@ -37,13 +37,12 @@ extern "C"
 
   extern UART_HandleTypeDef huart2;
 
-  /* USER CODE BEGIN Private defines */
-  /* USER CODE END Private defines */
+/* USER CODE BEGIN Private defines */
+#define HEADER_INDEX 0
+#define LENGTH_INDEX 1
+#define CMD_INDEX 2
+#define ADDRESS_INDEX 3
 
-  void MX_USART1_UART_Init(void);
-  void MX_USART2_UART_Init(void);
-
-  /* USER CODE BEGIN Prototypes */
   typedef enum
   {
     CHECKSUM_OK = 0xFF,
@@ -53,6 +52,21 @@ extern "C"
     LENGTH_ERROR = 0xFB,
     NULL_PTR_ERROR = 0xFA
   } Data_StatusTypeDef;
+
+  typedef enum
+  {
+    SPI_WRITE = 0x00,
+    SPI_READ_SINGLE = 0x01,
+    SPI_RESET = 0x02,
+    SPI_READ_MULTIPLE = 0x03,
+    SPI_WRITE_MULTIPLE = 0x04
+  } CMD_TypeDef;
+  /* USER CODE END Private defines */
+
+  void MX_USART1_UART_Init(void);
+  void MX_USART2_UART_Init(void);
+
+  /* USER CODE BEGIN Prototypes */
 
   void Prepare_Next_Packet(void);
   void Response(uint8_t *data, uint8_t data_len);

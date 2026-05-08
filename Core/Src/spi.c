@@ -170,7 +170,7 @@ HAL_StatusTypeDef Read_Multiple_Register(uint8_t *reg_addr, uint8_t *data, uint8
   }
 
   HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
-  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, len + 1, 100);
+  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi1, tx_data, rx_data, len + 1, 100); // +1 for the first byte which contains the first register address
   HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
 
   if (status == HAL_OK)
@@ -204,18 +204,9 @@ HAL_StatusTypeDef Write_Register(uint8_t reg_addr, uint8_t data)
   return status;
 }
 
-void Reset_RE41(void)
-{
-  // reset
-  HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_RESET);
-  HAL_Delay(3);
-}
-
 HAL_StatusTypeDef Write_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8_t len)
 {
   uint8_t tx_data[len + 1];
-  uint8_t rx_data[len + 1];
 
   tx_data[0] = (reg_addr << 1); // First byte MSB = 0 for write
   //|0address0|value0|value1|...|valueN
@@ -223,7 +214,6 @@ HAL_StatusTypeDef Write_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8
   {
     /* other bytes MSB = 0 */
     tx_data[i + 1] = data[i];
-    rx_data[i] = 0x00;
   }
 
   HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_RESET);
@@ -231,21 +221,15 @@ HAL_StatusTypeDef Write_Multiple_Register(uint8_t reg_addr, uint8_t *data, uint8
   HAL_StatusTypeDef status = HAL_SPI_Transmit(&hspi1, tx_data, len + 1, 100);
   HAL_GPIO_WritePin(RE41_NCS_GPIO_Port, RE41_NCS_Pin, GPIO_PIN_SET);
 
-  if (status == HAL_OK)
-  {
-    for (uint8_t i = 0; i < len; i++)
-    {
-      data[i] = rx_data[i + 1];
-    }
-  }
-  else
-  {
-    for (uint8_t i = 0; i < len; i++)
-    {
-      data[i] = 0xFF; // Indicate error
-    }
-  }
   return status;
+}
+
+void Reset_RE41(void)
+{
+  // reset
+  HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(RE41_PDRST_GPIO_Port, RE41_PDRST_Pin, GPIO_PIN_RESET);
+  HAL_Delay(3);
 }
 
 /* USER CODE END 1 */
