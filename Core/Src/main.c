@@ -228,7 +228,7 @@ int main(void)
           read_type_A(address);
           break;
         case TAG_TYPE_A_DUMP:
-          // dump_mem();
+          dump_mem();
           break;
         case TAG_TYPE_A_RESET:
           // reset_type_A(address);

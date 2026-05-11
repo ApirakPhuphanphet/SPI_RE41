@@ -129,96 +129,70 @@ uint8_t dump_mem(void)
     uint8_t rxData[64] = {0};
     uint16_t rxDataLen = 0;
 
+    uint8_t response_buffer[192] = {0};
+    uint16_t total_read_bytes = 0;
+
     RE41_rfOperate(RFOFF);
     HAL_Delay(6);
     RE41_rfOperate(RFON);
 
-    // Scanning a Tag ISO14443A
     RE41_configuration(ISO14443A_106KBPS);
 
-    // WUPA mode
     status = iso14443a_WUPA(rxData, &rxDataLen);
-    if (status != HFAL_NO_RESPONSE) // 1st skip "No response" printout
-    {
-        // HAL_UART_Transmit(&huart2, (uint8_t *)"\r\nWUPA:", 7, HAL_MAX_DELAY);
-        // re41_cli_rspPrintout(status, rxData, rxDataLen, 0);
-    }
-    // check
     if (status != HFAL_SUCCESS)
     {
-        if (runningState != 0)
-        {
-            RE41_rfOperate(RFOFF);
-            HAL_Delay(6);
-            RE41_rfOperate(RFON);
-        }
-        return status;
+        return status; // ไม่มีบัตรให้ออกเลย ไม่ต้อง reset RF
     }
 
     //------------------------------------------------------------------------//
     runningState++;
-    // SLEEP A mode (TypeA)
+    // 2. SLEEP A mode (TypeA)
     status = iso14443a_HLTA(rxData, &rxDataLen);
-    // check
     if (status != HFAL_SUCCESS)
     {
-        if (runningState != 0)
-        {
-            RE41_rfOperate(RFOFF);
-            HAL_Delay(6);
-            RE41_rfOperate(RFON);
-        }
-        return status;
+        goto ERROR_EXIT;
     }
 
     //------------------------------------------------------------------------//
     runningState++;
-    // WUPA mode
-    // combo command type A : Request + AntiColl + Select
+    // 3. WUPA + AntiColl + Select
     status = iso14443a_Req_Anti_Sel(SEND_WUPA_CMD, 0, rxData, &rxDataLen);
-    if (status == HFAL_SUCCESS)
+
+    if (status != HFAL_SUCCESS)
     {
-        for (uint16_t k = 0; k < (rxDataLen - 2); k++)
-        {
-            rxData[k] = rxData[k + 2];
-        }
-        rxDataLen -= 2; // neglect cascade level and SAK
+        goto ERROR_EXIT;
     }
 
     //------------------------------------------------------------------------//
     runningState++;
-    // Read Data mode
-    for (uint8_t i = 0; i < 48; i++) // Read all 16 blocks
+    for (uint8_t i = 0; i < 48; i += 4)
     {
         status = iso14443a_ReadBlock(i, rxData, &rxDataLen);
 
         if (status != HFAL_SUCCESS)
         {
-            // 💡 เทคนิค: ถ้าอ่านไม่ได้ ไม่ต้อง return ให้พัง
-            // เพราะอาจจะแปลว่าเราอ่านจน "สุดปลายหน่วยความจำบัตร" แล้ว
-            char *endMsg = " [END OF MEMORY or ERROR]";
+            char *endMsg = "\r\n[END OF MEMORY or ERROR]\r\n";
             HAL_UART_Transmit(&huart2, (uint8_t *)endMsg, strlen(endMsg), HAL_MAX_DELAY);
+            break;
         }
-        // re41_cli_rspPrintout(status, rxData, 4, 0);
-        Response(rxData, 4);
-        //------------------------------------------------------------------------//
-    }
-    if (status == HFAL_SUCCESS)
-    {
-        return 0;
-    }
-    else
-    {
-        if (runningState != 0)
-        {
-            // No execute next command and off field
-            RE41_rfOperate(RFOFF);
-            HAL_Delay(6);
-            RE41_rfOperate(RFON);
-        }
+
+        memcpy(&response_buffer[total_read_bytes], rxData, 16);
+        total_read_bytes += 16;
     }
 
-    return 0xFF;
+    //------------------------------------------------------------------------//
+    if (total_read_bytes > 0)
+    {
+        Response(response_buffer, total_read_bytes);
+        return 0; // Success
+    }
+
+ERROR_EXIT:
+    RE41_rfOperate(RFOFF);
+    HAL_Delay(6);
+    RE41_rfOperate(RFON);
+
+    return 0xFF; // Error
 }
 
 uint8_t write_type_A(uint8_t pageNo, uint8_t *data, uint16_t dataLen)
