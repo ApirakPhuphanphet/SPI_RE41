@@ -221,8 +221,8 @@ int main(void)
         }
         case TAG_TYPE_A_WRITE:
           // data is uart_buf[4] to uart_buf[7]
-          // write_type_A(address, (uint8_t *)uart_buf + 4, 4);
-          // read_type_A(address);
+          write_type_A(address, (uint8_t *)uart_buf + 4, 4);
+          read_type_A(address);
           break;
         case TAG_TYPE_A_READ:
           read_type_A(address);
