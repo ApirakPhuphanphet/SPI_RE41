@@ -122,6 +122,91 @@ uint8_t read_type_A(uint8_t addr)
     return 0xFF;
 }
 
+uint8_t read_uid_type_A(void)
+{
+    hfalStatus_t status = HFAL_ERROR;
+    uint8_t runningState = 0;
+    uint8_t rxData[64] = {0};
+    uint16_t rxDataLen = 0;
+
+    RE41_rfOperate(RFOFF);
+    HAL_Delay(6);
+    RE41_rfOperate(RFON);
+
+    // Scanning a Tag ISO14443A
+    RE41_configuration(ISO14443A_106KBPS);
+
+    // WUPA mode
+    status = iso14443a_WUPA(rxData, &rxDataLen);
+    if (status != HFAL_NO_RESPONSE) // 1st skip "No response" printout
+    {
+        // HAL_UART_Transmit(&huart2, (uint8_t *)"\r\nWUPA:", 7, HAL_MAX_DELAY);
+        // re41_cli_rspPrintout(status, rxData, rxDataLen, 0);
+    }
+    // check
+    if (status != HFAL_SUCCESS)
+    {
+        if (runningState != 0)
+        {
+            RE41_rfOperate(RFOFF);
+            HAL_Delay(6);
+            RE41_rfOperate(RFON);
+        }
+        return status;
+    }
+
+    //------------------------------------------------------------------------//
+    runningState++;
+    // SLEEP A mode (TypeA)
+    status = iso14443a_HLTA(rxData, &rxDataLen);
+    // re41_cli_rspPrintout(status, rxData, rxDataLen, 0);
+    // check
+    if (status != HFAL_SUCCESS)
+    {
+        if (runningState != 0)
+        {
+            RE41_rfOperate(RFOFF);
+            HAL_Delay(6);
+            RE41_rfOperate(RFON);
+        }
+        return status;
+    }
+
+    //------------------------------------------------------------------------//
+    runningState++;
+    // WUPA mode
+    // combo command type A : Request + AntiColl + Select
+    // HAL_UART_Transmit(&huart2, (uint8_t *)"\r\nWUPA+AC+SEL:", 14, HAL_MAX_DELAY);
+    status = iso14443a_Req_Anti_Sel(SEND_WUPA_CMD, 0, rxData, &rxDataLen);
+    if (status == HFAL_SUCCESS)
+    {
+        for (uint16_t k = 0; k < (rxDataLen - 2); k++)
+        {
+            rxData[k] = rxData[k + 2];
+        }
+        rxDataLen -= 2; // neglect cascade level and SAK
+    }
+
+    //------------------------------------------------------------------------//
+    if (status == HFAL_SUCCESS)
+    {
+        Response(rxData, rxDataLen);
+        return 0;
+    }
+    else
+    {
+        if (runningState != 0)
+        {
+            // No execute next command and off field
+            RE41_rfOperate(RFOFF);
+            HAL_Delay(6);
+            RE41_rfOperate(RFON);
+        }
+    }
+
+    return 0xFF;
+}
+
 uint8_t dump_mem(void)
 {
     hfalStatus_t status = HFAL_ERROR;

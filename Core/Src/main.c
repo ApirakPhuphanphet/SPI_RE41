@@ -234,7 +234,7 @@ int main(void)
           // reset_type_A(address);
           break;
         case TAG_TYPE_A_READ_UID:
-          // read_uid_type_A(address);
+          read_uid_type_A();
           break;
         default:
           break;
