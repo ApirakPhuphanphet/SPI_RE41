@@ -176,20 +176,19 @@ int main(void)
       if (status == CHECKSUM_OK)
       {
         uint8_t cmd = uart_buf[CMD_INDEX];
-        uint8_t address = uart_buf[ADDRESS_INDEX];
         switch (cmd)
         {
         case SPI_WRITE:
         {
           response_data = uart_buf[4];
-          Write_Register(address, response_data);
-          Read_Register(address, &response_data);
+          Write_Register(uart_buf[ADDRESS_INDEX], response_data);
+          Read_Register(uart_buf[ADDRESS_INDEX], &response_data);
           Response(&response_data, 1);
           break;
         }
         case SPI_READ_SINGLE:
         {
-          Read_Register(address, &response_data);
+          Read_Register(uart_buf[ADDRESS_INDEX], &response_data);
           Response(&response_data, 1);
           break;
         }
@@ -202,7 +201,7 @@ int main(void)
         {
           uint8_t num_bytes = uart_buf[1] - 2; // Total length - CMD and BCC
           uint8_t spi_data_buffer[num_bytes];
-          Read_Multiple_Register(address, spi_data_buffer, num_bytes);
+          Read_Multiple_Register(&uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
           Response(spi_data_buffer, num_bytes);
           break;
         }
@@ -214,24 +213,24 @@ int main(void)
           {
             spi_data_buffer[i] = uart_buf[4 + i];
           }
-          Write_Multiple_Register(address, spi_data_buffer, num_bytes);
-          Read_Register(address, &response_data);
+          Write_Multiple_Register(uart_buf[ADDRESS_INDEX], spi_data_buffer, num_bytes);
+          Read_Register(uart_buf[ADDRESS_INDEX], &response_data);
           Response(&response_data, 1);
           break;
         }
         case TAG_TYPE_A_WRITE:
           // data is uart_buf[4] to uart_buf[7]
-          write_type_A(address, (uint8_t *)uart_buf + 4, 4);
-          read_type_A(address);
+          write_type_A(uart_buf[ADDRESS_INDEX], (uint8_t *)uart_buf + 4, 4);
+          read_type_A(uart_buf[ADDRESS_INDEX]);
           break;
         case TAG_TYPE_A_READ:
-          read_type_A(address);
+          read_type_A(uart_buf[ADDRESS_INDEX]);
           break;
         case TAG_TYPE_A_DUMP:
           dump_mem();
           break;
         case TAG_TYPE_A_RESET:
-          // reset_type_A(address);
+          // reset_type_A(uart_buf[ADDRESS_INDEX]);
           break;
         case TAG_TYPE_A_READ_UID:
           read_uid_type_A();
