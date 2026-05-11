@@ -63,8 +63,7 @@ extern "C"
     TAG_TYPE_A_WRITE = 0x05,
     TAG_TYPE_A_READ = 0x06,
     TAG_TYPE_A_DUMP = 0x07,
-    TAG_TYPE_A_RESET = 0x08, // not ready yet
-    TAG_TYPE_A_READ_UID = 0x09
+    TAG_TYPE_A_READ_UID = 0x08
   } CMD_TypeDef;
   /* USER CODE END Private defines */
 

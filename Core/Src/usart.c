@@ -281,7 +281,6 @@ Data_StatusTypeDef Data_Verify(uint8_t *data, uint16_t total_length)
       command != TAG_TYPE_A_WRITE &&
       command != TAG_TYPE_A_READ &&
       command != TAG_TYPE_A_DUMP &&
-      command != TAG_TYPE_A_RESET &&
       command != TAG_TYPE_A_READ_UID)
   {
     return CMD_ERROR;
